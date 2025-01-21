@@ -17,8 +17,13 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { FormError } from "../form-error";
 import { FormSuccess } from "../form-success";
+import { login } from "@/actions/auth/login";
+import { useState, useTransition } from "react";
 
 export const LoginForm = () => {
+  const [error, setError] = useState<string | undefined>("");
+  const [success, setSuccess] = useState<string | undefined>("");
+  const [isPending, startTransition] = useTransition();
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
@@ -27,8 +32,15 @@ export const LoginForm = () => {
     },
   });
   const onSubmit = (values: z.infer<typeof LoginSchema>) => {
-    // TODO: Handle form submission
-    console.log(values);
+    setError("");
+    setSuccess("");
+
+    startTransition(() => {
+      login(values).then((data) => {
+        setError(data.error);
+        setSuccess(data.success);
+      });
+    });
   };
   return (
     <CardWrapper
@@ -47,7 +59,12 @@ export const LoginForm = () => {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="john.deo@gmail.com" type="email" />
+                    <Input
+                      disabled={isPending}
+                      {...field}
+                      placeholder="john.deo@gmail.com"
+                      type="email"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -60,17 +77,23 @@ export const LoginForm = () => {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="********" type="password" />
+                    <Input
+                      disabled={isPending}
+                      {...field}
+                      placeholder="********"
+                      type="password"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-          <FormError />
-          <FormSuccess />
+          <FormError message={error} />
+          <FormSuccess message={success} />
           <Button
             type="submit"
+            disabled={isPending}
             className="w-full text-sm font-semibold"
             variant="secondary"
           >
